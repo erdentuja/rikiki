@@ -86,6 +86,11 @@ class RikikiGame {
                 this.gameState = message.data;
                 this.render();
 
+                // Ha licitálás vége, mutassuk a modalt
+                if (message.data.biddingEnd) {
+                    this.showBiddingEnd(message.data.biddingEnd);
+                }
+
                 // Ha kör vége, mutassuk a modal-t
                 if (message.data.roundEnd) {
                     this.showRoundEnd(message.data.roundEnd);
@@ -533,6 +538,60 @@ class RikikiGame {
                 </table>
             </div>
         `;
+    }
+
+    /**
+     * Licitálás vége modal
+     */
+    showBiddingEnd(biddingEnd) {
+        const { totalBids, cardCount, players } = biddingEnd;
+        const diff = totalBids - cardCount;
+
+        let title, message, emoji;
+
+        if (totalBids < cardCount) {
+            title = 'Harc lesz az ütésekért!';
+            message = `Ja nem! 😄`;
+            emoji = '😌';
+        } else if (totalBids > cardCount) {
+            title = 'Harc lesz az ütésekért!';
+            message = `Ja de! 😄`;
+            emoji = '😬';
+        } else {
+            title = 'Pontosan kijön!';
+            message = 'Érdekes lesz! 🤔';
+            emoji = '🎯';
+        }
+
+        // Játékosok vállalásai
+        let bidsHtml = players.map(p => `
+            <div class="bid-summary-row">
+                <span>${p.name}</span>
+                <span class="bid-amount">${p.bid}</span>
+            </div>
+        `).join('');
+
+        const modal = document.createElement('div');
+        modal.className = 'bidding-end-modal';
+        modal.innerHTML = `
+            <div class="bidding-end-content">
+                <div class="bidding-end-emoji">${emoji}</div>
+                <h2 class="bidding-end-title">${title}</h2>
+                <p class="bidding-end-message">${message}</p>
+                <div class="bid-summary">
+                    ${bidsHtml}
+                    <div class="bid-summary-total">
+                        <span>Összesen: ${totalBids} / ${cardCount} lap</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.container.appendChild(modal);
+
+        setTimeout(() => {
+            modal.remove();
+        }, 2500);
     }
 
     /**

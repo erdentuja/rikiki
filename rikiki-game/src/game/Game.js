@@ -228,6 +228,20 @@ class Game {
         if (this.players.every(p => p.bid !== null)) {
             this.status = 'playing';
             this.currentPlayerIndex = this.trickStarterIndex;
+
+            // Licitálás vége adatok
+            const totalBids = this.players.reduce((sum, p) => sum + p.bid, 0);
+            const state = this.getGameState();
+            state.biddingEnd = {
+                totalBids: totalBids,
+                cardCount: this.cardsPerRound,
+                players: this.players.map(p => ({
+                    name: p.name,
+                    bid: p.bid,
+                    isAI: p.isAI
+                }))
+            };
+            return state;
         }
 
         return this.getGameState();

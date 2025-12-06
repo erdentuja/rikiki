@@ -499,6 +499,94 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* Licitálás vége modal */
+.bidding-end-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.bidding-end-content {
+    background: linear-gradient(145deg, #1a3d1f, #0d1f10);
+    border-radius: 25px;
+    padding: 40px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    border: 3px solid var(--accent-color);
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.3);
+    animation: popIn 0.4s ease;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.bidding-end-emoji {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.bidding-end-title {
+    font-size: 1.8rem;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.bidding-end-message {
+    font-size: 1.4rem;
+    color: #fff;
+    margin-bottom: 25px;
+}
+
+.bid-summary {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 15px;
+}
+
+.bid-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bid-summary-row:last-child {
+    border-bottom: none;
+}
+
+.bid-amount {
+    font-weight: bold;
+    color: var(--accent-color);
+    font-size: 1.1rem;
+}
+
+.bid-summary-total {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid var(--accent-color);
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--accent-color);
+}
+
 /* Kör vége modal */
 .round-end-modal {
     position: fixed;
@@ -511,6 +599,12 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .round-end-content {
@@ -521,6 +615,7 @@ body {
     width: 90%;
     text-align: center;
     border: 2px solid var(--accent-color);
+    animation: popIn 0.4s ease;
 }
 
 .round-end-title {
