@@ -250,33 +250,37 @@ class RikikiGame {
                 </div>
             </div>
 
-            <div class="opponents-row">
-                ${opponentsHtml}
-            </div>
+            <div class="game-main-wrapper">
+                <div class="game-content">
+                    <div class="opponents-row">
+                        ${opponentsHtml}
+                    </div>
 
-            <div class="game-table trump-${state.trumpSuit || ''}">
-                ${trumpHtml}
-                <div class="played-cards">
-                    ${playedCardsHtml || '<p style="color: #666;">Még nincs lerakott lap</p>'}
-                </div>
-            </div>
+                    <div class="game-table trump-${state.trumpSuit || ''}">
+                        ${trumpHtml}
+                        <div class="played-cards">
+                            ${playedCardsHtml || '<p style="color: #666;">Még nincs lerakott lap</p>'}
+                        </div>
+                    </div>
 
-            <div class="player-area">
-                <div class="player-info">
-                    <div class="player-name">${me ? me.name : 'Te'}</div>
-                    <div class="player-stats">
-                        <span class="player-stat">Vállalás: ${me && me.bid !== null ? me.bid : '-'}</span>
-                        <span class="player-stat">Ütések: ${me ? me.tricksWon : 0}</span>
-                        <span class="player-stat">Összesen: ${me ? me.totalScore : 0}</span>
+                    <div class="player-area">
+                        <div class="player-info">
+                            <div class="player-name">${me ? me.name : 'Te'}</div>
+                            <div class="player-stats">
+                                <span class="player-stat">Vállalás: ${me && me.bid !== null ? me.bid : '-'}</span>
+                                <span class="player-stat">Ütések: ${me ? me.tricksWon : 0}</span>
+                                <span class="player-stat">Összesen: ${me ? me.totalScore : 0}</span>
+                            </div>
+                        </div>
+                        <div class="player-hand" id="player-hand">
+                            ${myCardsHtml}
+                        </div>
+                        <div id="bidding-container"></div>
                     </div>
                 </div>
-                <div class="player-hand" id="player-hand">
-                    ${myCardsHtml}
-                </div>
-                <div id="bidding-container"></div>
-            </div>
 
-            ${this.renderScoreTable()}
+                ${this.renderScoreTable()}
+            </div>
         `;
     }
 
