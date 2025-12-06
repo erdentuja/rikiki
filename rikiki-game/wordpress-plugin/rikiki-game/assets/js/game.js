@@ -344,17 +344,44 @@ class RikikiGame {
                 ${forbiddenHtml}
                 <div class="bid-slider-container">
                     <input type="range" class="bid-slider" id="bid-slider"
-                           min="0" max="${maxBid}" value="0"
-                           oninput="game.updateBidDisplay(this.value)">
+                           min="0" max="${maxBid}" value="0">
                     <div class="bid-value" id="bid-value">0</div>
                 </div>
-                <button class="btn btn-primary" id="bid-button" onclick="game.placeBid()">
+                <button class="btn btn-primary" id="bid-button">
                     Licit leadása
                 </button>
             </div>
         `;
 
-        document.getElementById('bidding-container').innerHTML = biddingHtml;
+        const container = document.getElementById('bidding-container');
+        container.innerHTML = biddingHtml;
+
+        // Eseménykezelők hozzáadása
+        const slider = document.getElementById('bid-slider');
+        const bidValue = document.getElementById('bid-value');
+        const bidButton = document.getElementById('bid-button');
+
+        const self = this;
+
+        slider.addEventListener('input', function() {
+            bidValue.textContent = this.value;
+
+            if (forbiddenBid !== undefined && parseInt(this.value) === forbiddenBid) {
+                bidButton.disabled = true;
+                bidButton.textContent = 'Ez a licit nem engedélyezett!';
+            } else {
+                bidButton.disabled = false;
+                bidButton.textContent = 'Licit leadása';
+            }
+        });
+
+        bidButton.addEventListener('click', function() {
+            const bid = parseInt(slider.value);
+            self.send({
+                type: 'bid',
+                bid: bid
+            });
+        });
     }
 
     /**
