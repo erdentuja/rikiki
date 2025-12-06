@@ -295,6 +295,69 @@ class RikikiGame {
                     <input type="submit" name="rikiki_save_settings" class="button-primary" value="Beállítások mentése">
                 </p>
             </form>
+
+            <h2>Játék kezelés</h2>
+            <table class="form-table">
+                <tr>
+                    <th scope="row">Aktív játékok</th>
+                    <td>
+                        <p id="active-games-info">Betöltés...</p>
+                        <script>
+                            (function() {
+                                var ws = new WebSocket('ws://localhost:<?php echo RIKIKI_WS_PORT; ?>');
+                                var info = document.getElementById('active-games-info');
+                                ws.onopen = function() {
+                                    ws.send(JSON.stringify({type: 'getActiveRooms'}));
+                                };
+                                ws.onmessage = function(e) {
+                                    var data = JSON.parse(e.data);
+                                    if (data.type === 'activeRooms') {
+                                        info.innerHTML = 'Aktív szobák: <strong>' + data.count + '</strong>';
+                                    }
+                                    ws.close();
+                                };
+                                ws.onerror = function() {
+                                    info.textContent = 'Szerver nem elérhető';
+                                };
+                            })();
+                        </script>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">Összes játék újrakezdése</th>
+                    <td>
+                        <button type="button" class="button button-secondary" id="restart-all-games"
+                                onclick="restartAllGames()" style="background: #dc3232; border-color: #dc3232; color: white;">
+                            Összes játék leállítása és újrakezdés
+                        </button>
+                        <p class="description">Ez leállítja az összes aktív játékot és törli a szobákat. A játékosoknak újra kell csatlakozniuk.</p>
+                        <script>
+                            function restartAllGames() {
+                                if (!confirm('Biztosan le akarod állítani az összes aktív játékot?')) {
+                                    return;
+                                }
+                                var ws = new WebSocket('ws://localhost:<?php echo RIKIKI_WS_PORT; ?>');
+                                ws.onopen = function() {
+                                    ws.send(JSON.stringify({type: 'adminRestartAll', adminKey: '<?php echo wp_create_nonce('rikiki_admin'); ?>'}));
+                                };
+                                ws.onmessage = function(e) {
+                                    var data = JSON.parse(e.data);
+                                    if (data.type === 'restartSuccess') {
+                                        alert('Játékok sikeresen leállítva!');
+                                        location.reload();
+                                    } else if (data.type === 'error') {
+                                        alert('Hiba: ' + data.message);
+                                    }
+                                    ws.close();
+                                };
+                                ws.onerror = function() {
+                                    alert('Szerver nem elérhető!');
+                                };
+                            }
+                        </script>
+                    </td>
+                </tr>
+            </table>
         </div>
         <?php
     }

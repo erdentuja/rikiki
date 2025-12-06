@@ -101,6 +101,14 @@ class RikikiGame {
                 this.showToast(message.message, 'error');
                 break;
 
+            case 'gameRestarted':
+                // Admin újraindította a játékot
+                this.showToast('A játék újraindult. Csatlakozz újra!', 'error');
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+                break;
+
             default:
                 console.log('Ismeretlen üzenet:', message);
         }

@@ -196,14 +196,14 @@ body {
 
 /* Kártya stílusok */
 .card {
-    width: 70px;
-    height: 100px;
+    width: 90px;
+    height: 130px;
     background: linear-gradient(145deg, #fff, #f0f0f0);
-    border-radius: 8px;
+    border-radius: 10px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 5px;
+    padding: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
@@ -212,7 +212,7 @@ body {
 }
 
 .card:hover {
-    transform: translateY(-10px);
+    transform: translateY(-15px);
     box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.4);
 }
 
@@ -245,7 +245,7 @@ body {
 }
 
 .card-corner {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     font-weight: bold;
     line-height: 1;
 }
@@ -256,7 +256,7 @@ body {
 }
 
 .card-center {
-    font-size: 2rem;
+    font-size: 2.8rem;
     text-align: center;
     flex: 1;
     display: flex;
@@ -651,12 +651,16 @@ body {
     }
 
     .card {
-        width: 55px;
-        height: 80px;
+        width: 70px;
+        height: 100px;
     }
 
     .card-center {
-        font-size: 1.5rem;
+        font-size: 2rem;
+    }
+
+    .card-corner {
+        font-size: 0.9rem;
     }
 
     .trump-area {
@@ -685,13 +689,16 @@ body {
     }
 
     .card {
-        width: 45px;
-        height: 65px;
-        font-size: 0.7rem;
+        width: 55px;
+        height: 80px;
     }
 
     .card-center {
-        font-size: 1.2rem;
+        font-size: 1.5rem;
+    }
+
+    .card-corner {
+        font-size: 0.8rem;
     }
 
     .opponent-box {

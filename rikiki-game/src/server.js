@@ -169,6 +169,35 @@ wss.on('connection', (ws, req) => {
                     });
                     break;
 
+                case 'getActiveRooms':
+                    // Aktív szobák számának lekérdezése (admin)
+                    RoomManager.sendToClient(ws, {
+                        type: 'activeRooms',
+                        count: RoomManager.rooms.size
+                    });
+                    break;
+
+                case 'adminRestartAll':
+                    // Összes játék újraindítása (admin)
+                    console.log('Admin: Összes játék újraindítása');
+
+                    // Értesítjük az összes klienst
+                    for (const [roomCode, room] of RoomManager.rooms) {
+                        RoomManager.broadcastToRoom(room, {
+                            type: 'gameRestarted',
+                            message: 'A játék újraindult. Kérlek csatlakozz újra!'
+                        });
+                    }
+
+                    // Szobák törlése
+                    RoomManager.rooms.clear();
+                    RoomManager.playerRooms.clear();
+
+                    RoomManager.sendToClient(ws, {
+                        type: 'restartSuccess'
+                    });
+                    break;
+
                 default:
                     console.log('Ismeretlen üzenet típus:', data.type);
             }
