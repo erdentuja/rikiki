@@ -11,14 +11,17 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
+// WordPress prefix
+const WP_PREFIX = 'wp_';
+
 // Adatbázis táblák létrehozása
 async function initDatabase() {
     const connection = await pool.getConnection();
 
     try {
-        // Játék beállítások tábla
+        // Játék beállítások tábla (WordPress kezeli, itt csak ellenőrizzük)
         await connection.execute(`
-            CREATE TABLE IF NOT EXISTS rikiki_settings (
+            CREATE TABLE IF NOT EXISTS ${WP_PREFIX}rikiki_settings (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 setting_key VARCHAR(50) UNIQUE NOT NULL,
                 setting_value VARCHAR(255) NOT NULL,
@@ -36,14 +39,14 @@ async function initDatabase() {
 
         for (const [key, value] of defaultSettings) {
             await connection.execute(`
-                INSERT IGNORE INTO rikiki_settings (setting_key, setting_value)
+                INSERT IGNORE INTO ${WP_PREFIX}rikiki_settings (setting_key, setting_value)
                 VALUES (?, ?)
             `, [key, value]);
         }
 
         // Játék szobák tábla
         await connection.execute(`
-            CREATE TABLE IF NOT EXISTS rikiki_rooms (
+            CREATE TABLE IF NOT EXISTS ${WP_PREFIX}rikiki_rooms (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 room_code VARCHAR(10) UNIQUE NOT NULL,
                 status ENUM('waiting', 'playing', 'finished') DEFAULT 'waiting',
@@ -57,7 +60,7 @@ async function initDatabase() {
 
         // Játékosok a szobában
         await connection.execute(`
-            CREATE TABLE IF NOT EXISTS rikiki_room_players (
+            CREATE TABLE IF NOT EXISTS ${WP_PREFIX}rikiki_room_players (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 room_id INT NOT NULL,
                 user_id BIGINT,
@@ -65,41 +68,37 @@ async function initDatabase() {
                 is_ai BOOLEAN DEFAULT FALSE,
                 seat_position INT NOT NULL,
                 is_ready BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (room_id) REFERENCES rikiki_rooms(id) ON DELETE CASCADE
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
 
         // Játék körök táblázat (vállalások és ütések)
         await connection.execute(`
-            CREATE TABLE IF NOT EXISTS rikiki_rounds (
+            CREATE TABLE IF NOT EXISTS ${WP_PREFIX}rikiki_rounds (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 room_id INT NOT NULL,
                 round_number INT NOT NULL,
                 card_count INT NOT NULL,
                 trump_suit VARCHAR(10),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (room_id) REFERENCES rikiki_rooms(id) ON DELETE CASCADE
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
 
         // Játékos körönkénti adatok
         await connection.execute(`
-            CREATE TABLE IF NOT EXISTS rikiki_player_rounds (
+            CREATE TABLE IF NOT EXISTS ${WP_PREFIX}rikiki_player_rounds (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 round_id INT NOT NULL,
                 player_id INT NOT NULL,
                 bid INT DEFAULT NULL,
                 tricks_won INT DEFAULT 0,
-                score INT DEFAULT 0,
-                FOREIGN KEY (round_id) REFERENCES rikiki_rounds(id) ON DELETE CASCADE,
-                FOREIGN KEY (player_id) REFERENCES rikiki_room_players(id) ON DELETE CASCADE
+                score INT DEFAULT 0
             )
         `);
 
-        // Felhasználói statisztikák (wp_users kiegészítés)
+        // Felhasználói statisztikák
         await connection.execute(`
-            CREATE TABLE IF NOT EXISTS rikiki_user_stats (
+            CREATE TABLE IF NOT EXISTS ${WP_PREFIX}rikiki_user_stats (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 user_id BIGINT UNIQUE NOT NULL,
                 games_played INT DEFAULT 0,
@@ -114,18 +113,17 @@ async function initDatabase() {
 
         // Játék történet
         await connection.execute(`
-            CREATE TABLE IF NOT EXISTS rikiki_game_history (
+            CREATE TABLE IF NOT EXISTS ${WP_PREFIX}rikiki_game_history (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 room_id INT NOT NULL,
                 user_id BIGINT,
                 final_score INT NOT NULL,
                 position INT NOT NULL,
-                played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (room_id) REFERENCES rikiki_rooms(id) ON DELETE CASCADE
+                played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
 
-        console.log('Adatbázis táblák sikeresen létrehozva!');
+        console.log('Adatbázis táblák sikeresen létrehozva/ellenőrizve!');
     } catch (error) {
         console.error('Adatbázis hiba:', error);
         throw error;
@@ -134,4 +132,4 @@ async function initDatabase() {
     }
 }
 
-module.exports = { pool, initDatabase };
+module.exports = { pool, initDatabase, WP_PREFIX };

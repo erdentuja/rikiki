@@ -18,11 +18,13 @@ class RoomManager {
      */
     async getSettings() {
         try {
-            const [rows] = await pool.execute('SELECT setting_key, setting_value FROM rikiki_settings');
+            // WordPress wp_ prefixet használ
+            const [rows] = await pool.execute('SELECT setting_key, setting_value FROM wp_rikiki_settings');
             const settings = {};
             for (const row of rows) {
                 settings[row.setting_key] = row.setting_value;
             }
+            console.log('Beállítások betöltve:', settings);
             return {
                 playerCount: parseInt(settings.player_count) || 4,
                 maxRounds: parseInt(settings.max_rounds) || 10,

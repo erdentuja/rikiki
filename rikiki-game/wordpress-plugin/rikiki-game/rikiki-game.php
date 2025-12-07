@@ -46,6 +46,7 @@ class RikikiGame {
 
         // AJAX kezelők
         add_action('wp_ajax_rikiki_get_user_data', array($this, 'ajaxGetUserData'));
+        add_action('wp_ajax_rikiki_server_control', array($this, 'ajaxServerControl'));
     }
 
     public function init() {
@@ -247,29 +248,85 @@ class RikikiGame {
                     <tr>
                         <th scope="row">Szerver állapot</th>
                         <td>
-                            <span id="ws-status" style="padding: 5px 15px; border-radius: 20px; background: #ccc;">
+                            <span id="ws-status" style="padding: 5px 15px; border-radius: 20px; background: #ccc; display: inline-block; margin-right: 15px;">
                                 Ellenőrzés...
                             </span>
+                            <button type="button" class="button button-primary" id="btn-start-server" onclick="startServer()" style="background: #46b450; border-color: #46b450; margin-right: 10px;">
+                                ▶ Szerver indítása
+                            </button>
+                            <button type="button" class="button button-secondary" id="btn-stop-server" onclick="stopServer()" style="background: #dc3232; border-color: #dc3232; color: white;">
+                                ■ Szerver leállítása
+                            </button>
                             <script>
-                                (function() {
+                                var serverRunning = false;
+
+                                function checkServerStatus() {
                                     var ws = new WebSocket('ws://localhost:<?php echo RIKIKI_WS_PORT; ?>');
                                     var status = document.getElementById('ws-status');
+                                    var btnStart = document.getElementById('btn-start-server');
+                                    var btnStop = document.getElementById('btn-stop-server');
+
                                     ws.onopen = function() {
                                         status.style.background = '#46b450';
                                         status.style.color = 'white';
                                         status.textContent = 'Fut';
+                                        serverRunning = true;
+                                        btnStart.style.display = 'none';
+                                        btnStop.style.display = 'inline-block';
                                         ws.close();
                                     };
                                     ws.onerror = function() {
                                         status.style.background = '#dc3232';
                                         status.style.color = 'white';
                                         status.textContent = 'Nem fut';
+                                        serverRunning = false;
+                                        btnStart.style.display = 'inline-block';
+                                        btnStop.style.display = 'none';
                                     };
-                                })();
+                                }
+
+                                function startServer() {
+                                    document.getElementById('ws-status').textContent = 'Indítás...';
+                                    document.getElementById('ws-status').style.background = '#f0ad4e';
+
+                                    fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=rikiki_server_control&cmd=start&nonce=<?php echo wp_create_nonce('rikiki_server'); ?>')
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                setTimeout(checkServerStatus, 2000);
+                                            } else {
+                                                alert('Hiba: ' + data.data);
+                                                checkServerStatus();
+                                            }
+                                        })
+                                        .catch(err => {
+                                            alert('Hiba történt: ' + err);
+                                            checkServerStatus();
+                                        });
+                                }
+
+                                function stopServer() {
+                                    if (!confirm('Biztosan leállítod a szervert? Az aktív játékok megszakadnak!')) return;
+
+                                    document.getElementById('ws-status').textContent = 'Leállítás...';
+                                    document.getElementById('ws-status').style.background = '#f0ad4e';
+
+                                    fetch('<?php echo admin_url('admin-ajax.php'); ?>?action=rikiki_server_control&cmd=stop&nonce=<?php echo wp_create_nonce('rikiki_server'); ?>')
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            setTimeout(checkServerStatus, 1000);
+                                        })
+                                        .catch(err => {
+                                            alert('Hiba történt: ' + err);
+                                            checkServerStatus();
+                                        });
+                                }
+
+                                // Kezdeti ellenőrzés
+                                checkServerStatus();
                             </script>
-                            <p class="description">
-                                WebSocket szerver: <code>ws://localhost:<?php echo RIKIKI_WS_PORT; ?></code><br>
-                                Indítás: <code>cd rikiki-game && npm start</code>
+                            <p class="description" style="margin-top: 10px;">
+                                WebSocket szerver: <code>ws://localhost:<?php echo RIKIKI_WS_PORT; ?></code>
                             </p>
                         </td>
                     </tr>
@@ -648,6 +705,85 @@ class RikikiGame {
             'userName' => $user->display_name,
             'userEmail' => $user->user_email
         ));
+    }
+
+    /**
+     * AJAX: Szerver indítás/leállítás
+     */
+    public function ajaxServerControl() {
+        // Nonce ellenőrzés
+        if (!wp_verify_nonce($_GET['nonce'], 'rikiki_server')) {
+            wp_send_json_error('Érvénytelen biztonsági token');
+        }
+
+        // Jogosultság ellenőrzés
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Nincs jogosultságod ehhez a művelethez');
+        }
+
+        $cmd = sanitize_text_field($_GET['cmd']);
+        $server_dir = dirname(RIKIKI_PLUGIN_DIR) . '/../../../rikiki-game';
+
+        // Ha a szerver könyvtár nem található, próbáljuk a dokumentum gyökérből
+        if (!is_dir($server_dir)) {
+            $server_dir = ABSPATH . '../rikiki-game';
+        }
+
+        // Ha még mindig nem található, próbáljuk a plugin melletti könyvtárban
+        if (!is_dir($server_dir)) {
+            $server_dir = dirname(dirname(RIKIKI_PLUGIN_DIR)) . '/rikiki-game';
+        }
+
+        switch ($cmd) {
+            case 'start':
+                // Ellenőrizzük, hogy fut-e már
+                $check_cmd = "lsof -i :" . RIKIKI_WS_PORT . " | grep LISTEN";
+                exec($check_cmd, $output, $return_var);
+
+                if (!empty($output)) {
+                    wp_send_json_error('A szerver már fut');
+                }
+
+                // Node.js szerver indítása háttérben
+                $start_cmd = "cd " . escapeshellarg($server_dir) . " && nohup node src/server.js > /tmp/rikiki-server.log 2>&1 &";
+                exec($start_cmd, $output, $return_var);
+
+                // Várunk egy kicsit, hogy elinduljon
+                sleep(1);
+
+                // Ellenőrizzük, hogy sikerült-e
+                exec($check_cmd, $output2, $return_var2);
+
+                if (!empty($output2)) {
+                    wp_send_json_success('Szerver sikeresen elindítva');
+                } else {
+                    // Log olvasása hibakereséshez
+                    $log = file_exists('/tmp/rikiki-server.log') ? file_get_contents('/tmp/rikiki-server.log') : '';
+                    wp_send_json_error('Szerver indítási hiba: ' . substr($log, 0, 500));
+                }
+                break;
+
+            case 'stop':
+                // Szerver leállítása - megkeressük a PID-et és kilőjük
+                $kill_cmd = "lsof -ti :" . RIKIKI_WS_PORT . " | xargs -r kill -9";
+                exec($kill_cmd, $output, $return_var);
+
+                sleep(1);
+
+                // Ellenőrizzük, hogy leállt-e
+                $check_cmd = "lsof -i :" . RIKIKI_WS_PORT . " | grep LISTEN";
+                exec($check_cmd, $output2, $return_var2);
+
+                if (empty($output2)) {
+                    wp_send_json_success('Szerver sikeresen leállítva');
+                } else {
+                    wp_send_json_error('Szerver leállítása sikertelen');
+                }
+                break;
+
+            default:
+                wp_send_json_error('Ismeretlen parancs');
+        }
     }
 }
 
